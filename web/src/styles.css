@@ -1,0 +1,171 @@
+/* Design tokens – change these to restyle the whole app. */
+:root {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --ink: #18202b;
+  --muted: #5b6676;
+  --line: #d5dbe5;
+  --accent: #2340d9;
+  --accent-ink: #ffffff;
+  --open: #127a55;
+  --full: #c62f38;
+
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+
+  --radius: 10px;
+  --space: 1rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 1rem/1.55 var(--font-body);
+}
+
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Layout */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space) clamp(1rem, 4vw, 3rem);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.site-header nav { display: flex; gap: 1.25rem; align-items: center; }
+.site-header nav a:not(.button) { color: var(--ink); text-decoration: none; }
+.site-header nav a.router-link-exact-active:not(.button) { text-decoration: underline; text-underline-offset: 6px; }
+.brand { font: 800 1.25rem var(--font-display); color: var(--ink); text-decoration: none; }
+
+.page { max-width: 68rem; margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 3rem) 4rem; }
+.page-title { font: 800 clamp(2rem, 5vw, 3.25rem)/1.05 var(--font-display); margin: 0 0 1.5rem; letter-spacing: -0.02em; }
+.section-title { font: 600 1.25rem var(--font-display); margin: 2.5rem 0 1rem; }
+.muted { color: var(--muted); }
+.back-link { display: inline-block; margin-bottom: 1rem; }
+
+/* Ticket card – the signature element: a date stub torn off by a perforation */
+.ticket-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); }
+
+.ticket {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  min-height: 8rem;
+  color: inherit;
+  text-decoration: none;
+  background: var(--surface);
+  border-radius: var(--radius);
+  transition: transform 0.15s ease;
+}
+.ticket:hover { transform: translateY(-2px); }
+
+.ticket__stub {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: var(--radius) 0 0 var(--radius);
+  /* perforation: a dotted edge with two half-circle notches */
+  border-right: 3px dotted var(--bg);
+}
+.ticket__stub::before,
+.ticket__stub::after {
+  content: '';
+  position: absolute;
+  right: -10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.ticket__stub::before { top: -9px; }
+.ticket__stub::after { bottom: -9px; }
+
+.ticket__day { font: 800 2.5rem/1 var(--font-display); }
+.ticket__month { font: 600 1rem var(--font-display); }
+.ticket__body { padding: 1rem 1.25rem; }
+.ticket__title { font: 600 1.2rem/1.25 var(--font-display); margin: 0 0 0.5rem; }
+.ticket__meta { margin: 0; color: var(--muted); font-size: 0.95rem; }
+
+.ticket--past .ticket__stub { background: var(--muted); }
+.ticket--past { opacity: 0.8; }
+
+/* Detail page */
+.detail { display: grid; gap: 2.5rem; grid-template-columns: minmax(0, 1fr) 20rem; align-items: start; }
+.detail__when { font: 600 1.15rem var(--font-display); margin: 0; }
+.detail__where { margin: 0 0 1.25rem; color: var(--muted); }
+.detail__description { max-width: 60ch; }
+.detail__side { background: var(--surface); border-radius: var(--radius); padding: 1.5rem; display: grid; gap: 1.25rem; }
+.people { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.people li { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.85rem; }
+
+@media (max-width: 760px) {
+  .detail { grid-template-columns: 1fr; }
+}
+
+/* Seat meter */
+.seat-meter__count { margin: 0 0 0.5rem; display: flex; align-items: baseline; gap: 0.5rem; }
+.seat-meter__count strong { font: 800 2.75rem/1 var(--font-display); color: var(--open); }
+.seat-meter__bar { height: 10px; border-radius: 999px; background: var(--bg); overflow: hidden; }
+.seat-meter__bar span { display: block; height: 100%; background: var(--open); }
+.seat-meter--full .seat-meter__count strong { color: var(--full); }
+.seat-meter--full .seat-meter__bar span { background: var(--full); }
+
+/* Forms */
+.form { display: grid; gap: 1rem; }
+.form--wide { max-width: 36rem; background: var(--surface); padding: 1.5rem; border-radius: var(--radius); }
+.field { display: grid; gap: 0.3rem; }
+.field span { font-weight: 700; }
+.field em { font-weight: 400; color: var(--muted); }
+.field input, .field textarea {
+  font: inherit;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.field small { color: var(--full); }
+.field-row { display: grid; gap: 1rem; grid-template-columns: 2fr 1fr; }
+
+.button {
+  display: inline-block;
+  font: 700 1rem var(--font-body);
+  padding: 0.65rem 1.25rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-decoration: none;
+  cursor: pointer;
+}
+.button:disabled { opacity: 0.6; cursor: progress; }
+.button--small { padding: 0.4rem 0.9rem; font-size: 0.95rem; }
+
+.error-message { margin: 0; padding: 0.75rem 1rem; border-radius: 8px; background: #fbe9ea; color: var(--full); }
+.empty { background: var(--surface); border-radius: var(--radius); padding: 2rem; display: grid; gap: 1rem; justify-items: start; }
+
+/* Stats table */
+.table-wrap { overflow-x: auto; background: var(--surface); border-radius: var(--radius); }
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { text-align: left; padding: 0.85rem 1rem; border-bottom: 1px solid var(--line); }
+.table th { font: 600 0.95rem var(--font-display); color: var(--muted); }
+.status { padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.9rem; background: var(--bg); }
+.status--open { color: var(--open); }
+.status--full { color: var(--full); }
+.status--past { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket { transition: none; }
+  .ticket:hover { transform: none; }
+}

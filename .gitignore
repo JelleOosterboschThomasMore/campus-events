@@ -1,0 +1,20 @@
+# Dependencies – restored with `npm ci`, never committed
+node_modules/
+
+# Secrets – copy .env.example to .env locally
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Local data & output
+**/data/*.sqlite
+dist/
+coverage/
+*.log
+
+# Editor / OS specific – your machine, not the project
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

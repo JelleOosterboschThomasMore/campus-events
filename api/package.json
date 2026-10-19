@@ -1,0 +1,26 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Campus Events REST API (Express + Sequelize/SQLite)",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "dev": "node --watch src/server.mjs",
+    "seed": "node src/seed.mjs",
+    "test": "node --env-file=.env.test --test --test-reporter=spec \"tests/**/*.test.mjs\"",
+    "test:coverage": "node --env-file=.env.test --test --experimental-test-coverage \"tests/**/*.test.mjs\""
+  },
+  "dependencies": {
+    "amqplib": "^2.2.0",
+    "express": "^5.2.1",
+    "nodemailer": "^10.0.14",
+    "sequelize": "^6.37.8",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.19.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "supertest": "^7.3.1"
+  }
+}

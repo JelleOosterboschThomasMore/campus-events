@@ -1,0 +1,14 @@
+# Local services for development. Start only what you need, e.g.:
+#   docker compose up -d rabbitmq      (part 4) – management UI: http://localhost:15672  (guest / guest)
+#   docker compose up -d redis         (part 5) – look inside: docker compose exec redis redis-cli
+services:
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
