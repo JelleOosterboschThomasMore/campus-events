@@ -43,6 +43,7 @@ Later parts need a few services. You never need them to run the tests.
 | `npm run check` | Lint + tests. **The pipeline runs exactly this. It must be green before you hand in.** |
 | `npm run seed` | Reset the database to the demo data |
 | `npm run build` | Production build of the frontend |
+| `npm start` | Production: API (serves `web/dist` too when it exists) |
 
 ## How it fits together
 
@@ -55,15 +56,7 @@ so the browser only talks to one address and you don't need CORS.
 
 ### api/
 
-**Today** the whole API lives in one file:
-
-```
-api/src/app.mjs      settings, database + models, validation, routes, business rules, error handling
-api/src/server.mjs   starts the app (and adds demo data to an empty database)
-api/src/seed.mjs     npm run seed: reset the database
-```
-
-Prefered:
+The API is split into layers. A request travels top to bottom; each layer only knows the one below it:
 
 ```
 routes/        URL + validation → controller        (no logic)
@@ -73,6 +66,42 @@ repositories/  data access via Sequelize             (no rules)
 models/ db/    tables, connection, demo data
 config/        the only place that reads process.env
 ```
+
+Next to the layers:
+
+```
+middleware/    validate (zod), request logger, 404 + error handler
+errors/        AppError: what services throw, turned into { error: {...} } in one place
+cache/         in-memory cache for the GET endpoints (keys.mjs says what a write invalidates)
+mail/          confirmation mail: outbox dispatcher, SMTP transport, mail text
+app.mjs        builds the Express app (middleware order only)
+server.mjs     starts it (seeds an empty database, starts the mail dispatcher)
+```
+
+#### Confirmation mail (and what happens when the mail provider is down)
+
+Registering saves the registration **and** a `MailJob` row (the outbox) in one database transaction.
+Sending is done afterwards, in the background, so the request never waits for the mail provider and
+never fails because of it. A failed or timed-out send stays in the outbox and is retried with a growing
+delay (30 s, 1 min, 2 min, … up to `MAIL_MAX_ATTEMPTS`). Jobs that were waiting when the server stopped
+are sent after the next start. Without `SMTP_URL` the mail is only written to the log.
+
+#### Caching
+
+`GET /events`, `/events/:id`, `/events/:id/registrations` and `/stats` are cached in memory for
+`CACHE_TTL_SECONDS` (default 30). Every write (create/update/delete event, new registration) clears the
+cached answers it changes before the response is sent, so the next GET is always fresh. A read that was
+already running during a write is not allowed to store its old result. One exception by nature: the
+`past` status in `/stats` depends on the clock, so it can lag at most one TTL. The cache lives in one
+process; with several instances you would need a shared cache such as Redis.
+
+#### Deploying
+
+One web service serves the API and the built frontend on one URL (`npm run build`, then `npm start`).
+`render.yaml` is a ready Render Blueprint: Render dashboard → New → Blueprint → pick your repo.
+Set `SMTP_URL` and `MAIL_FROM` there if you want real mails. Check it with `GET /api/health`.
+The free tier has no persistent disk: the SQLite file resets when the service restarts or redeploys, and
+the demo data is added again on the next start.
 
 The integration tests in `api/tests/integration` only talk HTTP. They pass before your refactoring,
 and they must still pass after it, without changing them.

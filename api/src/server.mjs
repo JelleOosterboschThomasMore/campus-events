@@ -1,14 +1,30 @@
-import { app, Event, seedDemoData, sequelize } from './app.mjs';
+import { app } from './app.mjs';
+import { config } from './config/env.mjs';
+import { logger } from './config/logger.mjs';
+import { sequelize } from './db/connection.mjs';
+import { seedIfEmpty } from './db/seed.mjs';
+import { mailDispatcher } from './mail/index.mjs';
 
 await sequelize.sync();
 
-// First start on a fresh clone: fill the empty database so the UI has something to show.
-if ((await Event.count()) === 0) {
-  await seedDemoData();
+if (await seedIfEmpty()) {
   console.log('Empty database – demo data added');
 }
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Campus Events API running on http://localhost:${port}/api`);
+mailDispatcher.start(); // also sends mails that were still waiting when the server last stopped
+
+const server = app.listen(config.port, () => {
+  console.log(`Campus Events API running on http://localhost:${config.port}/api`);
 });
+
+// Hosting platforms stop the app with SIGTERM: finish what is running, then close.
+async function shutdown(signal) {
+  logger.info('shutting down', { signal });
+  server.close();
+  await mailDispatcher.stop();
+  await sequelize.close();
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

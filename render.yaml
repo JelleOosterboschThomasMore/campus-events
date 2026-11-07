@@ -1,0 +1,21 @@
+# Render Blueprint: one web service that serves the API and the built frontend on one URL.
+# Deploy: Render dashboard -> New -> Blueprint -> pick your GitHub repo.
+services:
+  - type: web
+    name: campus-events
+    runtime: node
+    plan: free
+    # --include=dev because the frontend build needs Vite, a dev dependency
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.12.0
+      - key: NODE_ENV
+        value: production
+      # Optional: without SMTP_URL confirmation mails are only logged. Set it in the Render dashboard.
+      - key: SMTP_URL
+        sync: false
+      - key: MAIL_FROM
+        sync: false
