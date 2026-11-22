@@ -13,6 +13,19 @@ export const eventService = {
     return cache.wrap(cacheKeys.eventList, () => eventRepository.listByStart());
   },
 
+  // Filtered after the cached list, so an event counts as past the moment it starts (not one TTL later).
+  // `now` is a parameter so a test can pick the moment.
+  async listUpcoming(now = new Date()) {
+    const events = await eventService.list();
+    return events.filter((event) => new Date(event.startsAt) >= now);
+  },
+
+  async listPast(now = new Date()) {
+    const events = await eventService.list();
+    // filter() makes a new array, so reverse() never changes the cached list. Most recent first.
+    return events.filter((event) => new Date(event.startsAt) < now).reverse();
+  },
+
   get(id) {
     return cache.wrap(cacheKeys.event(id), async () => {
       const event = await eventRepository.findById(id);
