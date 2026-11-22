@@ -1,5 +1,22 @@
 <script setup>
+import { onMounted, onUnmounted } from 'vue';
 import { RouterLink, RouterView } from 'vue-router';
+import { subscribeToNotifications } from './api/notifications.js';
+import ToastList from './components/ToastList.vue';
+import { showToast, toastText } from './toasts.js';
+
+// One connection for the whole app, opened here and not in a page: a page is mounted again on
+// every visit, which would open a second connection and show every toast twice.
+let unsubscribe = () => {};
+
+onMounted(() => {
+  unsubscribe = subscribeToNotifications((notification) => {
+    const text = toastText(notification);
+    if (text) showToast(text);
+  });
+});
+
+onUnmounted(() => unsubscribe());
 </script>
 
 <template>
@@ -14,4 +31,5 @@ import { RouterLink, RouterView } from 'vue-router';
   <main class="page">
     <RouterView />
   </main>
+  <ToastList />
 </template>
