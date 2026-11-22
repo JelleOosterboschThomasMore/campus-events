@@ -95,6 +95,24 @@ already running during a write is not allowed to store its old result. One excep
 `past` status in `/stats` depends on the clock, so it can lag at most one TTL. The cache lives in one
 process; with several instances you would need a shared cache such as Redis.
 
+#### Live notifications (toasts)
+
+Creating an event or registering makes the service publish a notification on the in-process
+`notifications/` hub. `GET /api/notifications` is a server-sent events stream: every open browser keeps
+one connection (opened once in `App.vue`) and gets each notification once, shown as a toast.
+Notifications only carry `type`, `eventId` and `title`, never who registered. The hub lives in one
+process; with several instances you would need a shared channel such as Redis pub/sub.
+
+#### MCP server (AI assistants)
+
+`POST /api/mcp` is a stateless [Model Context Protocol](https://modelcontextprotocol.io) server
+(Streamable HTTP). Tools: `list_upcoming_events`, `list_past_events` and `register_for_event`. They call
+the same services as the REST API, so a registration through an assistant is validated the same way and
+also shows a toast. Try it with the MCP Inspector (`npx @modelcontextprotocol/inspector`, transport
+"Streamable HTTP", URL `http://localhost:3000/api/mcp`), or add the deployed URL to an assistant, e.g.
+`claude mcp add --transport http campus-events https://<your-app>.onrender.com/api/mcp`.
+There is no authentication: anyone who knows the URL can register people, just like with the REST API.
+
 #### Deploying
 
 One web service serves the API and the built frontend on one URL (`npm run build`, then `npm start`).
@@ -113,6 +131,8 @@ and they must still pass after it, without changing them.
 | GET / PATCH / DELETE | `/api/events/:id` | One event (incl. `registered`, `spotsLeft`) |
 | GET / POST | `/api/events/:id/registrations` | List / register `{ name, email }` |
 | GET | `/api/stats` | Occupancy per event |
+| GET | `/api/notifications` | Live notifications (server-sent events) |
+| POST | `/api/mcp` | MCP endpoint for AI assistants |
 
 Errors always have this shape: `{ "error": { "code", "message", "details?" } }`.
 
