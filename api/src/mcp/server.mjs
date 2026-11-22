@@ -4,6 +4,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { logger } from '../config/logger.mjs';
 import { AppError } from '../errors/appError.mjs';
 import { eventService } from '../services/eventService.mjs';
+import { registrationService } from '../services/registrationService.mjs';
+import { idSchema, registrationSchema } from '../validation/schemas.mjs';
 
 // Only what the assistant needs to answer questions about an event.
 const forAssistant = ({ id, title, description, location, startsAt, capacity }) =>
@@ -46,6 +48,22 @@ export function createMcpServer() {
       description: 'Lists campus events that have already started or taken place, most recent first.'
     },
     () => runTool(async () => (await eventService.listPast()).map(forAssistant))
+  );
+
+  // Same validation rules as the REST API (reused schemas), so both doors into the app accept the same input.
+  server.registerTool(
+    'register_for_event',
+    {
+      title: 'Register for an event',
+      description: 'Registers one person for an event. Needs the event id (find it with list_upcoming_events ' +
+        'if the user gives a title), the person\'s name and their email address. Ask the user for a missing ' +
+        'name or email instead of making one up. To register several people, call it once per person.',
+      inputSchema: { eventId: idSchema.shape.id, ...registrationSchema.shape }
+    },
+    ({ eventId, name, email }) => runTool(async () => {
+      const registration = await registrationService.register(eventId, { name, email });
+      return { registered: true, registrationId: registration.id, eventId, name: registration.name };
+    })
   );
 
   return server;

@@ -39,7 +39,7 @@ describe('MCP tools', () => {
   it('describes every tool, so the assistant knows when to use it', async () => {
     const { tools } = await assistant.listTools();
 
-    assert.deepEqual(tools.map((tool) => tool.name).sort(), ['list_past_events', 'list_upcoming_events']);
+    assert.deepEqual(tools.map((tool) => tool.name).sort(), ['list_past_events', 'list_upcoming_events', 'register_for_event']);
     for (const tool of tools) assert.ok(tool.description.length > 20, `${tool.name} needs a description`);
   });
 
@@ -54,6 +54,42 @@ describe('MCP tools', () => {
     const { data } = await callTool(assistant, 'list_past_events');
 
     assert.deepEqual(data.map((event) => event.title), ['Last Week Talk', 'Old Workshop']);
+  });
+
+  it('register_for_event registers the person, like the registration form does', async () => {
+    const { data: upcoming } = await callTool(assistant, 'list_upcoming_events');
+    const eventId = upcoming[0].id;
+
+    const result = await callTool(assistant, 'register_for_event', { eventId, name: 'Ada', email: 'Ada@Example.com' });
+
+    assert.equal(result.isError, false);
+    assert.equal(result.data.registered, true);
+    const registrations = await request(app).get(`/api/events/${eventId}/registrations`);
+    assert.deepEqual(registrations.body.map(({ name, email }) => ({ name, email })), [{ name: 'Ada', email: 'ada@example.com' }]);
+  });
+
+  it('register_for_event explains a rejected registration so the assistant can tell the user', async () => {
+    const { data: upcoming } = await callTool(assistant, 'list_upcoming_events');
+    const person = { eventId: upcoming[0].id, name: 'Ada', email: 'ada@example.com' };
+    await callTool(assistant, 'register_for_event', person);
+
+    const duplicate = await callTool(assistant, 'register_for_event', person);
+    const unknownEvent = await callTool(assistant, 'register_for_event', { ...person, eventId: 9999 });
+
+    assert.equal(duplicate.isError, true);
+    assert.match(duplicate.text, /already registered/);
+    assert.equal(unknownEvent.isError, true);
+    assert.match(unknownEvent.text, /not found/);
+  });
+
+  it('register_for_event refuses an invalid email before anything is stored', async () => {
+    const { data: upcoming } = await callTool(assistant, 'list_upcoming_events');
+
+    const result = await callTool(assistant, 'register_for_event', { eventId: upcoming[0].id, name: 'Ada', email: 'not-an-email' });
+
+    assert.equal(result.isError, true);
+    const registrations = await request(app).get(`/api/events/${upcoming[0].id}/registrations`);
+    assert.deepEqual(registrations.body, []);
   });
 });
 
