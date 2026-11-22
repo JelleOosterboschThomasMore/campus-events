@@ -3,6 +3,7 @@ import { cache, cacheKeys } from '../cache/index.mjs';
 import { logger } from '../config/logger.mjs';
 import { conflict, notFound } from '../errors/appError.mjs';
 import { buildConfirmationMail, mailDispatcher } from '../mail/index.mjs';
+import { notificationHub } from '../notifications/index.mjs';
 import { eventRepository } from '../repositories/eventRepository.mjs';
 import { registrationRepository } from '../repositories/registrationRepository.mjs';
 
@@ -46,6 +47,8 @@ export const registrationService = {
     logger.info('new registration', { event: event.title, name, email });
 
     cache.invalidate([cacheKeys.event(eventId), cacheKeys.registrations(eventId), cacheKeys.stats]);
+    // Everyone may know that someone registered, never who: no name, no email.
+    notificationHub.publish({ type: 'registration-created', eventId: event.id, title: event.title });
     mailDispatcher.kick(); // sends in the background; the response does not wait for it
     return registration;
   }

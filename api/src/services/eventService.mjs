@@ -3,6 +3,7 @@
 import { cache, cacheKeys } from '../cache/index.mjs';
 import { notFound } from '../errors/appError.mjs';
 import { eventRepository } from '../repositories/eventRepository.mjs';
+import { notificationHub } from '../notifications/index.mjs';
 import { registrationRepository } from '../repositories/registrationRepository.mjs';
 
 const eventNotFound = (id) => notFound(`Event with id ${id} not found`);
@@ -21,10 +22,10 @@ export const eventService = {
       return { ...event, registered, spotsLeft: Math.max(event.capacity - registered, 0) };
     });
   },
-
   async create(data) {
     const event = await eventRepository.create(data);
     cache.invalidate([cacheKeys.eventList, cacheKeys.stats]);
+    notificationHub.publish({ type: 'event-created', eventId: event.id, title: event.title });
     return event;
   },
 
