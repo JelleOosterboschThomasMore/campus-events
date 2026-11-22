@@ -1,19 +1,19 @@
 // Services announce what happened here; whoever is interested subscribes when they open the browser.
 export class NotificationHub {
-#listeners = new Set();
+  #listeners = new Set();
 
-subscribe(listener) {
+  subscribe(listener) {
     this.#listeners.add(listener);
     return () => this.#listeners.delete(listener);
-}
+  }
 
-publish(notification) {
+  publish(notification) {
     for (const listener of this.#listeners) {
-        listener(notification);
+      listener(notification);
     }
-}
+  }
 
-listenerCount() {
+  listenerCount() {
     return this.#listeners.size;
-}
+  }
 }
